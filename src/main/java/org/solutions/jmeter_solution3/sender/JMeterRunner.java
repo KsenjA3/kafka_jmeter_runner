@@ -22,10 +22,10 @@ import java.util.HashMap;
 public class JMeterRunner {
 
     // Установите путь к вашей установке JMeter
-    String jmeterHome = "src/main/resources/apache-jmeter-5.6.3/";
-    private static final String TEST_PLAN_PATH = "kafka_load_test.jmx";
-    private static final String RESULTS_FILE_PATH = "kafka_test_results3.jtl";
-    private static final String DASHBOARD_REPORT_PATH = "kafka_dashboard_report";
+    String jmeterHome = "/opt/apache-jmeter-5.6.3";
+    private static final String TEST_PLAN_PATH = "/jmeter_tests/kafka-sender3.jmx";
+    private static final String RESULTS_FILE_PATH = "/jmeter_tests/kafka_test_results3.jtl";
+    private static final String DASHBOARD_REPORT_PATH = "/jmeter_tests/kafka_dashboard_report3";
 
     public void runJmeter(HashMap<String, String> properties) {
         HashTree testPlanTree = null;
@@ -33,9 +33,8 @@ public class JMeterRunner {
 
         // 1. Инициализация JMeter Environment
         try {
-            System.out.println( Class.forName("org.solutions.jmeter_solution3.consumers.KafkaConsumerSampler"));
-            System.out.println(Class.forName("org.solutions.jmeter_solution3.producers.KafkaProducerSampler"));
-
+//            System.out.println( Class.forName("org.solutions.jmeter_solution3.consumers.KafkaConsumerSampler"));
+//            System.out.println(Class.forName("org.solutions.jmeter_solution3.producers.KafkaProducerSampler"));
 
 
             JMeterUtils.setJMeterHome(jmeterHome);
@@ -63,7 +62,7 @@ public class JMeterRunner {
         }
 
         // 2. Загрузка тестового плана
-        File in = new File("src/main/resources/jmeter_solution3/kafka-sender3.jmx");
+        File in = new File("TEST_PLAN_PATH");
         try {
             testPlanTree = SaveService.loadTree(in);
             log.info("Тестовый план успешно загружен из файла: " + in.getAbsolutePath());
@@ -88,14 +87,14 @@ public class JMeterRunner {
         testPlanTree.add(testPlanTree.getArray()[0], resultCollector);  //обеспечивает, что ResultCollector будет собирать данные для всего тестового плана
 
         // 4 Сохранение JMX-файла для отладки
-        String jmxOutputFile = "generated_test_plan3.jmx";
-        try (FileOutputStream out = new FileOutputStream(jmxOutputFile)) {
-            SaveService.saveTree(testPlanTree, out);
-            log.info("Тестовый план сохранен в: " + jmxOutputFile);
-        } catch (Exception e) {
-            log.error("Ошибка при сохранении JMX-файла: " + e.getMessage());
-            e.printStackTrace();
-        }
+//        String jmxOutputFile = "generated_test_plan3.jmx";
+//        try (FileOutputStream out = new FileOutputStream(jmxOutputFile)) {
+//            SaveService.saveTree(testPlanTree, out);
+//            log.info("Тестовый план сохранен в: " + jmxOutputFile);
+//        } catch (Exception e) {
+//            log.error("Ошибка при сохранении JMX-файла: " + e.getMessage());
+//            e.printStackTrace();
+//        }
 
         // 5. Конфигурация и запуск JMeter Engine
         StandardJMeterEngine engine = new StandardJMeterEngine();
@@ -114,17 +113,15 @@ public class JMeterRunner {
         }
 
         // 6. Generate HTML Report
-//        try {
-//            ReportGenerator reportGen = new ReportGenerator(RESULTS_FILE_PATH, null);
-//            log.info("Начало генерации HTML-отчета...");
-//            reportGen.generate();
-//            log.info("HTML-отчет успешно сгенерирован.");
-//        } catch (GenerationException | ConfigurationException e) {
-//            log.error("Ошибка при генерации отчета: " + e.getMessage());
-//            e.printStackTrace();
-//        }
-//                System.out.println("HTML Report generated in folder: ./report-output");
-
+        try {
+            ReportGenerator reportGen = new ReportGenerator(RESULTS_FILE_PATH, null);
+            log.info("Начало генерации HTML-отчета...");
+            reportGen.generate();
+            log.info("HTML-отчет успешно сгенерирован.");
+        } catch (GenerationException | ConfigurationException e) {
+            log.error("Ошибка при генерации отчета: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public static void main(String[] args) {
