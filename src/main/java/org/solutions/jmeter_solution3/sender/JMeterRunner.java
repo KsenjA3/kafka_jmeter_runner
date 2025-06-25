@@ -113,15 +113,15 @@ public class JMeterRunner {
         }
 
         // 6. Generate HTML Report
-        try {
-            ReportGenerator reportGen = new ReportGenerator(RESULTS_FILE_PATH, null);
-            log.info("Начало генерации HTML-отчета...");
-            reportGen.generate();
-            log.info("HTML-отчет успешно сгенерирован.");
-        } catch (GenerationException | ConfigurationException e) {
-            log.error("Ошибка при генерации отчета: " + e.getMessage());
-            e.printStackTrace();
-        }
+//        try {
+//            ReportGenerator reportGen = new ReportGenerator(RESULTS_FILE_PATH, null);
+//            log.info("Начало генерации HTML-отчета...");
+//            reportGen.generate();
+//            log.info("HTML-отчет успешно сгенерирован.");
+//        } catch (GenerationException | ConfigurationException e) {
+//            log.error("Ошибка при генерации отчета: " + e.getMessage());
+//            e.printStackTrace();
+//        }
     }
 
     public static void main(String[] args) {

@@ -28,7 +28,7 @@
             <collectionProp name="Arguments.arguments">
               <elementProp name="bootstrap" elementType="Argument">
                 <stringProp name="Argument.name">bootstrap</stringProp>
-                <stringProp name="Argument.value">kafka:90923</stringProp>
+                <stringProp name="Argument.value">kafka:9093</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="topic" elementType="Argument">

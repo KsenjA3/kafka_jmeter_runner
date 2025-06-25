@@ -4,6 +4,8 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JMeterKafkaRunner {
 
@@ -18,21 +20,41 @@ public class JMeterKafkaRunner {
         String hostResultsDir = "./jmeter_tests"; // Это наша смонтированная папка
 
         System.out.println("Запуск JMeter-теста для Kafka...");
+        // Создаем команду для запуска JMeter внутри Docker-контейнера
+        // -n: режим без GUI
+        // -t: путь к JMX-файлу (внутри контейнера)
+        // -l: путь к файлу результатов (внутри контейнера)
+        // -j: путь к файлу логов JMeter (внутри контейнера)
 
         try {
-            // Создаем команду для запуска JMeter внутри Docker-контейнера
-            // -n: режим без GUI
-            // -t: путь к JMX-файлу (внутри контейнера)
-            // -l: путь к файлу результатов (внутри контейнера)
-            // -j: путь к файлу логов JMeter (внутри контейнера)
-            String command = String.format(
-                            "docker exec -w /jmeter_tests jmeter /bin/bash -c \"/opt/apache-jmeter-5.6.3/bin/jmeter -n -t %s -l %s -j %s\"",
+
+//            String command = String.format(
+//                            "docker exec -w /jmeter_tests jmeter /bin/bash -c \"/opt/apache-jmeter-5.6.3/bin/jmeter -n -t %s -l %s -j %s\"",
+//                               jmxFileName, resultsFileName, logFileName);
+//            System.out.println("Выполняемая команда: " + command);
+//            Process process = Runtime.getRuntime().exec(command);
+
+            // Создаем список аргументов для команды bash
+            List<String> commandParts = new ArrayList<>();
+            commandParts.add("/bin/bash");
+            commandParts.add("-c");
+            // Весь остальной вызов JMeter - это один аргумент для -c
+            commandParts.add(String.format(
+                    "/opt/apache-jmeter-5.6.3/bin/jmeter -n -t %s -l %s -j %s",
                     jmxFileName, resultsFileName, logFileName
-            );
+            ));
 
-            System.out.println("Выполняемая команда: " + command);
+            // Создаем ProcessBuilder
+            ProcessBuilder pb = new ProcessBuilder(commandParts);
 
-            Process process = Runtime.getRuntime().exec(command);
+            // Установим рабочую директорию, если это необходимо
+            // В вашем docker-compose.yml уже есть working_dir: /jmeter_tests,
+            // поэтому это может быть не строго необходимо, но хорошая практика.
+            pb.directory(new File("/jmeter_tests"));
+
+            System.out.println("Выполняемая команда: " + String.join(" ", pb.command()));
+            Process process = pb.start(); // Запускаем процесс
+
 
             // Чтение вывода (stdout) процесса
             new Thread(() -> {
