@@ -23,7 +23,7 @@ public class JMeterRunner {
 
     // Установите путь к вашей установке JMeter
     String jmeterHome = "/opt/apache-jmeter-5.6.3";
-    private static final String TEST_PLAN_PATH = "/jmeter_tests/kafka-sender3.jmx";
+//    private static final String TEST_PLAN_PATH = "/jmeter_tests/kafka-sender3.jmx";
     private static final String RESULTS_FILE_PATH = "/jmeter_tests/kafka_test_results3.jtl";
     private static final String DASHBOARD_REPORT_PATH = "/jmeter_tests/kafka_dashboard_report3";
 
@@ -62,7 +62,7 @@ public class JMeterRunner {
         }
 
         // 2. Загрузка тестового плана
-        File in = new File("TEST_PLAN_PATH");
+        File in = new File("/jmeter_tests/kafka-sender3.jmx");
         try {
             testPlanTree = SaveService.loadTree(in);
             log.info("Тестовый план успешно загружен из файла: " + in.getAbsolutePath());
