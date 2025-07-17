@@ -26,6 +26,7 @@ public class KafkaConsumerSampler extends AbstractJavaSamplerClient implements S
     private static final String PARAM_GROUP_ID = "groupId"; // Добавляем group.id
     private static final String PARAM_POLL_TIMEOUT_MS = "pollTimeoutMs"; // Таймаут для каждого poll()
     private static final String PARAM_SAMPLE_DURATION_MS = "sampleDurationMs"; // Длительность одного сэмпла
+    private static final String PARAM_MESSAGES_TO_READ = "messagesToRead"; // Новый параметр: сколько сообщений читать
 
     // Инициализируется один раз в setupTest и используется всеми потоками, JMeter не сериализует
     private transient KafkaConsumer<String, String> consumer;
@@ -41,12 +42,13 @@ public class KafkaConsumerSampler extends AbstractJavaSamplerClient implements S
     @Override
     public Arguments getDefaultParameters() {
         Arguments parameters = new Arguments();
-        parameters.addArgument(PARAM_BOOTSTRAP, "kafka:9093");
+        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
 //        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
-        parameters.addArgument(PARAM_TOPIC, "load_test_topic"); // Должен совпадать с топиком продюсера
+        parameters.addArgument(PARAM_TOPIC, "benchmark_topic"); // Должен совпадать с топиком продюсера
         parameters.addArgument(PARAM_GROUP_ID, "jmeter_consumer_group_${__threadNum}"); // Уникальный ID группы для каждого потока
         parameters.addArgument(PARAM_POLL_TIMEOUT_MS, "500"); // Таймаут для каждого вызова poll()
         parameters.addArgument(PARAM_SAMPLE_DURATION_MS, "10000"); // Длительность работы Sampler'а в миллисекундах
+        parameters.addArgument(PARAM_MESSAGES_TO_READ, "100"); // Новый параметр: сколько сообщений читать
         return parameters;
     }
 
@@ -105,34 +107,26 @@ public class KafkaConsumerSampler extends AbstractJavaSamplerClient implements S
         res.setSampleLabel("KafkaConsumerRequest - Topic: " + topicName);
         res.sampleStart(); // Запуск таймера для измерения времени выполнения Sampler'а
 
+        long messagesToRead = context.getLongParameter(PARAM_MESSAGES_TO_READ, 100); // Получаем параметр N
         long messagesReadCount = 0;
         long startTime = System.currentTimeMillis();
-        long endTime = startTime + sampleDurationMs;
 
         try {
-            // Цикл опроса сообщений в течение заданного sampleDurationMs
-            while (System.currentTimeMillis() < endTime) {
-                // Опрашиваем Kafka на наличие новых записей.
-                // Duration.ofMillis(pollTimeoutMs) определяет, как долго poll() будет ждать сообщений.
+            // Читаем ровно N сообщений
+            while (messagesReadCount < messagesToRead) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(pollTimeoutMs));
-
                 if (records.isEmpty()) {
-                    // Если нет новых сообщений, продолжаем опрос до истечения sampleDurationMs
-                    log.debug("KafkaConsumerSampler: Нет новых сообщений.");
                     continue;
                 }
-
-                // Обрабатываем полученные записи
                 for (ConsumerRecord<String, String> record : records) {
                     messagesReadCount++;
                     log.debug("KafkaConsumerSampler: Получено сообщение: Offset = {}, Partition = {}, Key = {}, Value_Length = {}",
                             record.offset(), record.partition(), record.key(), record.value().length());
-                    // Здесь можно добавить логику проверки содержимого сообщения,
-                    // например, проверку длины или ключа, если это часть вашего теста.
+                    // Здесь можно добавить логику проверки содержимого сообщения
+                    if (messagesReadCount >= messagesToRead) {
+                        break;
+                    }
                 }
-
-                // Коммит оффсетов асинхронно для лучшей производительности. Соответствие реальному поведению приложения.
-                // Это не блокирует поток и позволяет продолжать опрос.
                 consumer.commitAsync((offsets, exception) -> {
                     if (exception != null) {
                         log.error("KafkaConsumerSampler: Ошибка при асинхронной фиксации оффсетов: {}", exception.getMessage(), exception);
@@ -144,7 +138,7 @@ public class KafkaConsumerSampler extends AbstractJavaSamplerClient implements S
 
             res.setSuccessful(true);
             res.setResponseCodeOK();
-            res.setResponseMessage("Успешно прочитано " + messagesReadCount + " сообщений за " + sampleDurationMs + " мс.");
+            res.setResponseMessage("Успешно прочитано " + messagesReadCount + " сообщений.");
             res.setResponseData(("Прочитано сообщений: " + messagesReadCount).getBytes());
             res.setDataType(SampleResult.TEXT);
             log.info("KafkaConsumerSampler: Завершение сэмпла. Прочитано {} сообщений за {} мс.", messagesReadCount, (System.currentTimeMillis() - startTime));

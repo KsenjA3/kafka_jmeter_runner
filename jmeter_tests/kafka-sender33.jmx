@@ -12,8 +12,9 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
+
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Producers">
-        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.num_threads">3</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -23,17 +24,18 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
+
         <JavaSampler guiclass="JavaTestSamplerGui" testclass="JavaSampler" testname="KafkaProducer" enabled="true">
           <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
             <collectionProp name="Arguments.arguments">
               <elementProp name="bootstrap" elementType="Argument">
                 <stringProp name="Argument.name">bootstrap</stringProp>
-                <stringProp name="Argument.value">kafka:9093</stringProp>
+                <stringProp name="Argument.value">localhost:9092</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="topic" elementType="Argument">
                 <stringProp name="Argument.name">topic</stringProp>
-                <stringProp name="Argument.value">load_test_topic</stringProp>
+                <stringProp name="Argument.value">benchmark_topic</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="payloadB" elementType="Argument">
@@ -61,10 +63,12 @@
           <stringProp name="classname">org.solutions.jmeter_solution3.producers.KafkaProducerSampler</stringProp>
         </JavaSampler>
         <hashTree/>
+
       </hashTree>
+
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Consumers">
-        <intProp name="ThreadGroup.num_threads">2</intProp>
-        <intProp name="ThreadGroup.ramp_time">2</intProp>
+        <intProp name="ThreadGroup.num_threads">100</intProp>
+        <intProp name="ThreadGroup.ramp_time">10</intProp>
         <longProp name="ThreadGroup.duration">1000</longProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
@@ -75,17 +79,18 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
+
         <JavaSampler guiclass="JavaTestSamplerGui" testclass="JavaSampler" testname="KafkaConsumer" enabled="true">
           <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
             <collectionProp name="Arguments.arguments">
               <elementProp name="bootstrap" elementType="Argument">
                 <stringProp name="Argument.name">bootstrap</stringProp>
-                <stringProp name="Argument.value">kafka:9093</stringProp>
+                <stringProp name="Argument.value">localhost:9092</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="topic" elementType="Argument">
                 <stringProp name="Argument.name">topic</stringProp>
-                <stringProp name="Argument.value">load_test_topic</stringProp>
+                <stringProp name="Argument.value">benchmark_topic</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="groupId" elementType="Argument">
@@ -101,6 +106,11 @@
               <elementProp name="sampleDurationMs" elementType="Argument">
                 <stringProp name="Argument.name">sampleDurationMs</stringProp>
                 <stringProp name="Argument.value">1000</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
+              <elementProp name="messagesToRead" elementType="Argument">
+                <stringProp name="Argument.name">messagesToRead</stringProp>
+                <stringProp name="Argument.value">100</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
             </collectionProp>

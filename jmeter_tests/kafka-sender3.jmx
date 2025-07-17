@@ -113,6 +113,11 @@
 				  <stringProp name="Argument.value">${SAMPLE_DURATION_MS}</stringProp>
 				  <stringProp name="Argument.metadata">=</stringProp>
 				</elementProp>
+				<elementProp name="messagesToRead" elementType="Argument">
+				  <stringProp name="Argument.name">messagesToRead</stringProp>
+				  <stringProp name="Argument.value">100</stringProp>
+				  <stringProp name="Argument.metadata">=</stringProp>
+				</elementProp>
 			  </collectionProp>
 			</elementProp>          
 		  

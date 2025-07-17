@@ -10,6 +10,7 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.solutions.jmeter_solution3.utils.MessageJsonGenerator;
 
 import java.io.Serializable;
 import java.time.Duration;
@@ -20,7 +21,7 @@ import java.util.concurrent.TimeUnit; // Для использования TimeU
 
 @Log4j2
 public class KafkaProducerSampler extends AbstractJavaSamplerClient  implements Serializable {
-
+    private MessageJsonGenerator messageJsonGenerator;
     private static final long serialVersionUID = 1L; // Для корректной сериализации в JMeter
     private transient KafkaProducer<String, String> producer;    // инициализирован один раз и переиспользован потоками, не будет сериализовано, что важно для JMeter.
 
@@ -45,9 +46,9 @@ public class KafkaProducerSampler extends AbstractJavaSamplerClient  implements 
     @Override
     public Arguments getDefaultParameters() {
         Arguments parameters = new Arguments();
-        parameters.addArgument(PARAM_BOOTSTRAP, "kafka:9093");
+        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
 //        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092"); // Адрес вашего Kafka брокера
-        parameters.addArgument(PARAM_TOPIC, "load_demo");            // Название темы Kafka
+        parameters.addArgument(PARAM_TOPIC, "benchmark_topic");            // Название темы Kafka
         parameters.addArgument(PARAM_PAYLOAD, "100");                 // Размер сообщения в байтах (повторение символа 'x')
         parameters.addArgument(PARAM_MESSAGE_KEY, "${__threadNum}");      // Встроенная функция JMeter, возвращает порядковый номер текущего потока (виртуального пользователя), который выполняет данный Sampler.
         parameters.addArgument(PARAM_ASKS, "1"); // Уровень подтверждений
@@ -63,6 +64,7 @@ public class KafkaProducerSampler extends AbstractJavaSamplerClient  implements 
     @Override
     public void setupTest(JavaSamplerContext context) {
         log.info("Вызов setupTest для KafkaProducerSampler. Инициализация KafkaProducer.");
+        messageJsonGenerator = new MessageJsonGenerator();
 
         // Получаем параметры из контекста
         String bootstrapServers = context.getParameter(PARAM_BOOTSTRAP);
@@ -108,10 +110,7 @@ public class KafkaProducerSampler extends AbstractJavaSamplerClient  implements 
         String messageKey = context.getParameter(PARAM_MESSAGE_KEY); // Получаем порядковый номер виртуального пользователя
 
         // Генерируем тело сообщения на каждой итерации
-        String messageValue = null;
-        StringBuilder sb = new StringBuilder(payloadBytes);
-        for (int i = 0; i < payloadBytes; i++) { sb.append('x');  }
-        messageValue = sb.toString();
+        String messageValue = messageJsonGenerator.generateMessage();
 
         try {
             ProducerRecord<String, String> record = new ProducerRecord<>(topicName, messageKey, messageValue); // Создаем ProducerRecord
