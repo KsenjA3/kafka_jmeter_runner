@@ -42,8 +42,8 @@ public class KafkaConsumerSampler extends AbstractJavaSamplerClient implements S
     @Override
     public Arguments getDefaultParameters() {
         Arguments parameters = new Arguments();
-        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
-//        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
+        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9094");
+//        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9094");
         parameters.addArgument(PARAM_TOPIC, "benchmark_topic"); // Должен совпадать с топиком продюсера
         parameters.addArgument(PARAM_GROUP_ID, "jmeter_consumer_group_${__threadNum}"); // Уникальный ID группы для каждого потока
         parameters.addArgument(PARAM_POLL_TIMEOUT_MS, "500"); // Таймаут для каждого вызова poll()

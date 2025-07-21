@@ -46,8 +46,8 @@ public class KafkaProducerSampler extends AbstractJavaSamplerClient  implements 
     @Override
     public Arguments getDefaultParameters() {
         Arguments parameters = new Arguments();
-        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092");
-//        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9092"); // Адрес вашего Kafka брокера
+        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9094");
+//        parameters.addArgument(PARAM_BOOTSTRAP, "localhost:9094"); // Адрес вашего Kafka брокера
         parameters.addArgument(PARAM_TOPIC, "benchmark_topic");            // Название темы Kafka
         parameters.addArgument(PARAM_PAYLOAD, "100");                 // Размер сообщения в байтах (повторение символа 'x')
         parameters.addArgument(PARAM_MESSAGE_KEY, "${__threadNum}");      // Встроенная функция JMeter, возвращает порядковый номер текущего потока (виртуального пользователя), который выполняет данный Sampler.

@@ -7,17 +7,23 @@ import java.util.*;
 
 public class MessageJsonGenerator {
    
-    private final String baseFile = "src/main/resources/generated_message_1.json";
+    private final String baseFile = "generated_message_1.json";
     private final ObjectMapper mapper;
     private final List<String> nameList;
 
     public MessageJsonGenerator (){
         mapper = new ObjectMapper();
 
-        // Прочитать исходный файл
+        // Прочитать исходный файл из ресурсов через ClassLoader
         Map<String, Object> baseJson = null;
-        try {      baseJson = mapper.readValue(new File(baseFile), new TypeReference<Map<String, Object>>() {}); }
-        catch (IOException e) { throw new RuntimeException(e);}
+        try (InputStream is = getClass().getClassLoader().getResourceAsStream(baseFile)) {
+            if (is == null) {
+                throw new RuntimeException("Resource not found: " + baseFile);
+            }
+            baseJson = mapper.readValue(is, new TypeReference<Map<String, Object>>() {});
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         List<Map<String, Object>> metrics = (List<Map<String, Object>>) baseJson.get("metrics");
 
@@ -32,11 +38,10 @@ public class MessageJsonGenerator {
 
 
     public  String generateMessage() {
-
-            long baseTimestamp = System.currentTimeMillis();
+          
 
             Map<String, Object> message = new LinkedHashMap<>();
-            long msgTimestamp = baseTimestamp + new Random().nextInt(10000)- 10000;
+            long msgTimestamp = System.currentTimeMillis();
             message.put("timestamp", msgTimestamp);
 
             List<Map<String, Object>> newMetrics = new ArrayList<>();
