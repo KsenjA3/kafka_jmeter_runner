@@ -47,7 +47,7 @@ public class MessageJsonGenerator {
             List<Map<String, Object>> newMetrics = new ArrayList<>();
             for (int j = 0; j < 4850; j++) {
                 String name = nameList.get(new Random().nextInt(nameList.size()));
-                long metricTimestamp = msgTimestamp + new Random().nextInt(10000) - 5000;
+                long metricTimestamp = msgTimestamp ;
                 String dataType = new Random().nextBoolean() ? "Int32" : "Float";
                 Object value;
                 if (dataType.equals("Int32")) {
