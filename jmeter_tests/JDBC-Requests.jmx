@@ -126,17 +126,15 @@
             <stringProp name="cacheKey">true</stringProp>
             <stringProp name="script">
                 def messageId = vars.get('messageId_1'); 
-                def messageTimestamp = vars.get('messageTimestamp_1');
                 def totalRecords = vars.get('currentCount_1');
 
-                def currentTime = System.currentTimeMillis();
+                def messageTimestamp = vars.get("messageTimestamp_1")?.toLong() ?: 0L
+                def currentTime = System.currentTimeMillis()                
 
                 log.info("Message ID: " + messageId); 
-                log.info("Message e2e full time : " + (currentTime - messageTimestamp));
+                log.info("Message e2e full time: " + (currentTime - messageTimestamp) + " ms")
                 log.info("Current Records: " + totalRecords);
-                log.info("Expected Records: " + vars.get('expectedCount'));
-
-               
+                log.info("Expected Records: " + vars.get('expectedCount'));               
               </stringProp>
           </JSR223Sampler>
           <hashTree/>

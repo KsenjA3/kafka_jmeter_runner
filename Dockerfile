@@ -63,3 +63,62 @@ COPY jmeter_tests/ /jmeter_tests/
 
 # ШАГ 7: Установите рабочую директорию для ваших тестов, как указано в docker-compose.yml
 WORKDIR /jmeter_tests
+
+
+
+#  1
+#  docker network create monitoring-net
+
+#2
+#   GRAFANA
+#   docker run -d \
+#  --name=grafana \
+#  -p 3000:3000 \
+#  --network monitoring-net \
+#  -v grafana-storage:/var/lib/grafana \
+#  -e "GF_SECURITY_ADMIN_USER=admin" \
+#  -e "GF_SECURITY_ADMIN_PASSWORD=admin" \
+#  grafana/grafana
+
+#  docker run -d --name=grafana -p 3000:3000 --network monitoring-net  -v grafana-storage:/var/lib/grafana -e "GF_SECURITY_ADMIN_USER=admin" -e "GF_SECURITY_ADMIN_PASSWORD=admin" grafana/grafana
+
+
+#3
+#   docker run -d
+#  --name=influxdb
+#  -p 8086:8086
+#  --network monitoring-net
+#  -v influxdb-storage:/var/lib/influxdb
+#  -e INFLUXDB_DB=jmeter
+#  -e INFLUXDB_ADMIN_USER=admin
+#  -e INFLUXDB_ADMIN_PASSWORD=3edcvfr4
+#  -e INFLUXDB_HTTP_AUTH_ENABLED=true
+#  influxdb:1.11.8
+
+  #   docker run -d --name=influxdb -p 8086:8086 --network monitoring-net -v influxdb-storage:/var/lib/influxdb -e INFLUXDB_DB=jmeter-e INFLUXDB_ADMIN_USER=admin -e INFLUXDB_ADMIN_PASSWORD=3edcvfr4 -e INFLUXDB_HTTP_AUTH_ENABLED=true influxdb:1.11.8
+
+#4
+#  docker run -d -p 8888:8888 --name=chronograf --link influxdb:influxdb chronograf --influxdb-url=http://influxdb:8086
+#  http://localhost:8088
+#  docker run -d \
+#  --name chronograf \
+#  --network monitoring-net \
+#  -p 8888:8888 \
+#  chronograf \
+#  --influxdb-url=http://influxdb:8086
+
+  #  docker run -d  --name chronograf  --network monitoring-net -p 8888:8888 chronograf  --influxdb-url=http://influxdb:8086
+  #  http://localhost:8088
+
+
+
+#  docker exec -it influxdb influx
+#  > CREATE DATABASE jmeter
+#  > SHOW DATABASES
+#  > exit
+
+#  USE jmeter
+#  SHOW TAG KEYS FROM jmeter
+#  SHOW MEASUREMENTS
+
+#  SELECT * FROM jmeter LIMIT 5;

@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
+  <hashTree>
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="Database Query JDBC Test Plan">
+      <stringProp name="TestPlan.comments">Test plan for monitoring the number of records in the messages table via JDBC</stringProp>
+      <boolProp name="TestPlan.tearDown_on_shutdown">true</boolProp>
+      <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables">
+        <collectionProp name="Arguments.arguments">
+          <elementProp name="influxdbCustomUrl" elementType="Argument">
+            <stringProp name="Argument.name">influxdbCustomUrl</stringProp>
+            <stringProp name="Argument.value">http://localhost:8086/write?db=jmeter</stringProp>
+            <stringProp name="Argument.metadata">=</stringProp>
+            <stringProp name="Argument.desc">URL for sending custom metrics to InfluxDB</stringProp>
+          </elementProp>
+        </collectionProp>
+      </elementProp>
+    </TestPlan>
+    <hashTree>
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="JDBC Monitor Thread Group">
+        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <longProp name="ThreadGroup.delay">0</longProp>
+        <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller">
+          <stringProp name="LoopController.loops">1</stringProp>
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+        </elementProp>
+      </ThreadGroup>
+      <hashTree>
+        <JDBCDataSource guiclass="TestBeanGUI" testclass="JDBCDataSource" testname="JDBC Connection Configuration" enabled="true">
+          <boolProp name="autocommit">true</boolProp>
+          <stringProp name="checkQuery"></stringProp>
+          <stringProp name="connectionAge">5000</stringProp>
+          <stringProp name="connectionProperties"></stringProp>
+          <stringProp name="dataSource">benchmark</stringProp>
+          <stringProp name="dbUrl">jdbc:postgresql://localhost:5432/benchmark</stringProp>
+          <stringProp name="driver">org.postgresql.Driver</stringProp>
+          <stringProp name="initQuery"></stringProp>
+          <boolProp name="keepAlive">true</boolProp>
+          <stringProp name="username">benchmark</stringProp>
+          <stringProp name="password">benchmark</stringProp>
+          <stringProp name="poolMax">10</stringProp>
+          <boolProp name="preinit">false</boolProp>
+          <stringProp name="timeout">10000</stringProp>
+          <stringProp name="transactionIsolation">DEFAULT</stringProp>
+          <stringProp name="trimInterval">60000</stringProp>
+        </JDBCDataSource>
+        <hashTree/>
+        <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="JDBC Request: Get Initial Count" enabled="true">
+          <stringProp name="dataSource">benchmark</stringProp>
+          <stringProp name="query">SELECT COUNT(*) FROM messages;</stringProp>
+          <stringProp name="queryArguments"></stringProp>
+          <stringProp name="queryArgumentsTypes"></stringProp>
+          <stringProp name="queryTimeout"></stringProp>
+          <stringProp name="queryType">Select Statement</stringProp>
+          <stringProp name="resultSetHandler">Store as String</stringProp>
+          <stringProp name="resultSetMaxRows"></stringProp>
+          <stringProp name="resultVariable">initialCount</stringProp>
+          <stringProp name="variableNames"></stringProp>
+        </JDBCSampler>
+        <hashTree>
+          <JSR223PostProcessor guiclass="TestBeanGUI" testclass="JSR223PostProcessor" testname="Calculate Expected Count" enabled="true">
+            <stringProp name="scriptLanguage">groovy</stringProp>
+            <stringProp name="parameters"></stringProp>
+            <stringProp name="filename"></stringProp>
+            <stringProp name="cacheKey">true</stringProp>
+            <stringProp name="script">
+                def metricsPerMessage = 4850
+                def totalThreads = 3 // или получить из проперти/vars, если нужно
+
+                def raw = vars.get(&quot;initialCount&quot;) ?: &quot;[{count=0}]&quot;
+                def initialCount = raw.replaceAll(/[\[\]\{\}a-z=]/, &quot;&quot;).trim().toInteger()
+                def expectedCount = initialCount + metricsPerMessage * totalThreads
+                def currentCount = 0
+                
+                vars.put(&quot;expectedCount&quot;, expectedCount.toString())
+                vars.put(&quot;startWaitTime&quot;, String.valueOf(System.currentTimeMillis()))
+
+                log.info(&quot;Initial Count: &quot; + initialCount)
+                log.info(&quot;Expected Count: &quot; + expectedCount)
+                log.info(&quot;Start Wait Time: &quot; + vars.get(&quot;startWaitTime&quot;))
+            </stringProp>
+          </JSR223PostProcessor>
+          <hashTree/>
+        </hashTree>
+        <WhileController guiclass="WhileControllerGui" testclass="WhileController" testname="Wait for all messages">
+          <stringProp name="WhileController.condition">
+                      ${__groovy(
+                        def currentCountStr = vars.get(&apos;currentCount_1&apos;) ?: &apos;0&apos;;
+                        def currentCount = currentCountStr.isInteger() ? currentCountStr.toInteger() : 0;
+
+                        def expectedCount = Integer.parseInt(vars.get(&apos;expectedCount&apos;) ?: &apos;0&apos;);
+                        def startWaitTime = Long.parseLong(vars.get(&apos;startWaitTime&apos;) ?: &apos;0&apos;);
+
+                        def currentTime = System.currentTimeMillis();
+                        def timeout = 600000; // 10 минут в миллисекундах
+
+                        
+                        (currentCount &lt; expectedCount) &amp;&amp; ((currentTime - startWaitTime) &lt; timeout);
+                      )}
+            </stringProp>
+        </WhileController>
+        <hashTree>
+
+          <JDBCSampler guiclass="TestBeanGUI" testclass="JDBCSampler" testname="JDBC Request: Count Messages" enabled="true">
+            <stringProp name="dataSource">benchmark</stringProp>
+            <stringProp name="queryType">Select Statement</stringProp>
+            <stringProp name="query">
+                  SELECT
+                      id,
+                      timestamp,
+                      (SELECT COUNT(*) FROM messages) AS total_records
+                  FROM messages
+                  ORDER BY timestamp DESC
+                  LIMIT 1;
+            </stringProp>
+            <stringProp name="queryArguments"></stringProp>
+            <stringProp name="queryArgumentsTypes"></stringProp>
+            <stringProp name="variableNames">messageId,messageTimestamp,currentCount</stringProp>
+            <stringProp name="resultSetHandler">Store as String</stringProp>
+            <stringProp name="queryTimeout"></stringProp>
+            <stringProp name="resultVariable"></stringProp>
+            <stringProp name="resultSetMaxRows"></stringProp>
+          </JDBCSampler>
+          <hashTree>
+            <JSR223Listener guiclass="TestBeanGUI" testclass="JSR223Listener" testname="Log and Process Results" enabled="true">
+              <stringProp name="cacheKey">true</stringProp>
+              <stringProp name="filename"></stringProp>
+              <stringProp name="parameters"></stringProp>
+              <stringProp name="script">
+                def messageId = vars.get(&apos;messageId_1&apos;); 
+                def totalRecords = vars.get(&apos;currentCount_1&apos;);
+
+                def messageTimestamp = vars.get(&quot;messageTimestamp_1&quot;)?.toLong() ?: 0L
+                def timeDelivery = System.currentTimeMillis() - messageTimestamp
+                vars.put(&quot;timeDelivery&quot;, timeDelivery.toString())
+
+                log.info(&quot;Message ID: &quot; + messageId); 
+                log.info(&quot;Message e2e full time: &quot; + timeDelivery  + &quot; ms&quot;)
+                log.info(&quot;Current Records: &quot; + totalRecords);
+                log.info(&quot;Expected Records: &quot; + vars.get(&apos;expectedCount&apos;));
+
+                // --- Send custom metrics to InfluxDB ---
+                try {
+                    // Only send data if we have a valid record count
+                    if (totalRecords != null) {
+                        // Construct the InfluxDB line protocol string
+                        // e2e_metrics is the measurement name.
+                        // timeDelivery and totalRecords are fields (numeric values). 'i' means integer.
+                        String lineProtocol = "e2e_metrics,application=jdbc_e2e timeDelivery=" + timeDelivery + "i,totalRecords=" + totalRecords + "i"
+
+                        // Get InfluxDB URL from User Defined Variables
+                        String influxUrl = vars.get("influxdbCustomUrl")
+                        if (influxUrl == null || influxUrl.isEmpty()) {
+                            log.warn("influxdbCustomUrl variable is not set. Skipping sending custom metrics.")
+                        } else {
+                            def url = new URL(influxUrl)
+                            def connection = url.openConnection()
+                            connection.setRequestMethod("POST")
+                            connection.setDoOutput(true)
+                            connection.setRequestProperty("Content-Type", "text/plain; charset=UTF-8")
+                            
+                            // Set reasonable timeouts
+                            connection.setConnectTimeout(1000) // 1 second
+                            connection.setReadTimeout(1000)    // 1 second
+
+                            new OutputStreamWriter(connection.getOutputStream(), "UTF-8").with {
+                                write(lineProtocol)
+                                flush()
+                                close()
+                            }
+
+                            def responseCode = connection.getResponseCode()
+                            if (responseCode &gt;= 300) {
+                                log.error("Error sending custom metrics to InfluxDB. Response code: " + responseCode + ", Response message: " + connection.getResponseMessage())
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    log.error("Failed to send custom metrics to InfluxDB.", e)
+                }
+
+                // --- Check if the test should stop ---
+                def currentCount = totalRecords.isInteger() ? totalRecords.toInteger() : 0
+                def expectedCount = (vars.get(&apos;expectedCount&apos;) ?: &apos;0&apos;).toInteger()
+                def startWaitTime = (vars.get(&apos;startWaitTime&apos;) ?: &apos;0&apos;).toLong()
+                def timeout = 600000 // 10 minutes
+
+                if (currentCount &gt;= expectedCount || (System.currentTimeMillis() - startWaitTime &gt;= timeout)) {
+                    prev.setStopThread(true)
+                    log.info(&quot;Exit condition met (count or timeout). Stopping thread.&quot;)
+                }
+              </stringProp>
+              <stringProp name="scriptLanguage">groovy</stringProp>
+            </JSR223Listener>
+            <hashTree/>
+
+          </hashTree>
+
+        </hashTree>
+      </hashTree>
+
+      <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report" enabled="true">
+        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <objProp>
+          <name>saveConfig</name>
+          <value class="SampleSaveConfiguration">
+            <time>true</time>
+            <latency>true</latency>
+            <timestamp>true</timestamp>
+            <success>true</success>
+            <label>true</label>
+            <code>true</code>
+            <message>true</message>
+            <threadName>true</threadName>
+            <dataType>true</dataType>
+            <encoding>false</encoding>
+            <assertions>true</assertions>
+            <subresults>true</subresults>
+            <responseData>false</responseData>
+            <samplerData>false</samplerData>
+            <xml>false</xml>
+            <fieldNames>true</fieldNames>
+            <responseHeaders>false</responseHeaders>
+            <requestHeaders>false</requestHeaders>
+            <responseDataOnError>false</responseDataOnError>
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
+            <assertionsResultsToSave>0</assertionsResultsToSave>
+            <bytes>true</bytes>
+            <sentBytes>true</sentBytes>
+            <url>true</url>
+            <threadCounts>true</threadCounts>
+            <idleTime>true</idleTime>
+            <connectTime>true</connectTime>
+          </value>
+        </objProp>
+        <stringProp name="filename"></stringProp>
+      </ResultCollector>
+      <hashTree/>
+      <BackendListener guiclass="BackendListenerGui" testclass="BackendListener" testname="Backend Listener">
+        <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
+          <collectionProp name="Arguments.arguments">
+            <elementProp name="influxdbMetricsSender" elementType="Argument">
+              <stringProp name="Argument.name">influxdbMetricsSender</stringProp>
+              <stringProp name="Argument.value">org.apache.jmeter.visualizers.backend.influxdb.HttpMetricsSender</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="influxdbUrl" elementType="Argument">
+              <stringProp name="Argument.name">influxdbUrl</stringProp>
+              <stringProp name="Argument.value">http://localhost:8086/write?db=jmeter</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="application" elementType="Argument">
+              <stringProp name="Argument.name">application</stringProp>
+              <stringProp name="Argument.value">jdbc_e2e</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="measurement" elementType="Argument">
+              <stringProp name="Argument.name">measurement</stringProp>
+              <stringProp name="Argument.value">jmeter</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="summaryOnly" elementType="Argument">
+              <stringProp name="Argument.name">summaryOnly</stringProp>
+              <stringProp name="Argument.value">false</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="samplersRegex" elementType="Argument">
+              <stringProp name="Argument.name">samplersRegex</stringProp>
+              <stringProp name="Argument.value">.*</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="percentiles" elementType="Argument">
+              <stringProp name="Argument.name">percentiles</stringProp>
+              <stringProp name="Argument.value">50;75;99</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="testTitle" elementType="Argument">
+              <stringProp name="Argument.name">testTitle</stringProp>
+              <stringProp name="Argument.value">JDBC_DB</stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+            <elementProp name="eventTags" elementType="Argument">
+              <stringProp name="Argument.name">eventTags</stringProp>
+              <stringProp name="Argument.value"></stringProp>
+              <stringProp name="Argument.metadata">=</stringProp>
+            </elementProp>
+          </collectionProp>
+        </elementProp>
+        <stringProp name="classname">org.apache.jmeter.visualizers.backend.influxdb.InfluxdbBackendListenerClient</stringProp>
+      </BackendListener>
+      <hashTree/>
+    </hashTree>
+  </hashTree>
+</jmeterTestPlan>
