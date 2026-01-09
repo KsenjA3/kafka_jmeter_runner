@@ -1,0 +1,4 @@
+timeStamp,elapsed,label,responseCode,responseMessage,threadName,dataType,success,failureMessage,bytes,sentBytes,grpThreads,allThreads,URL,Latency,IdleTime,Connect
+1751274892068,1011,KafkaConsumerRequest - Topic: load_test_topic,200,Успешно прочитано 0 сообщений за 1000 мс.,Consumers 2-1,text,true,,40,0,2,3,null,0,0,0
+1751274892961,1003,KafkaConsumerRequest - Topic: load_test_topic,200,Успешно прочитано 0 сообщений за 1000 мс.,Consumers 2-2,text,true,,40,0,1,2,null,0,0,0
+1751274892050,5269,KafkaProducerRequest - Topic: load_test_topic,200,Сообщение успешно отправлено в Kafka.,Producers 1-1,text,true,,27,0,1,1,null,0,0,0
