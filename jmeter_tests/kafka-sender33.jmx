@@ -12,8 +12,9 @@
       <stringProp name="TestPlan.user_define_classpath"></stringProp>
     </TestPlan>
     <hashTree>
+
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Producers">
-        <intProp name="ThreadGroup.num_threads">1</intProp>
+        <intProp name="ThreadGroup.num_threads">3</intProp>
         <intProp name="ThreadGroup.ramp_time">1</intProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -23,17 +24,18 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
+
         <JavaSampler guiclass="JavaTestSamplerGui" testclass="JavaSampler" testname="KafkaProducer" enabled="true">
           <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
             <collectionProp name="Arguments.arguments">
               <elementProp name="bootstrap" elementType="Argument">
                 <stringProp name="Argument.name">bootstrap</stringProp>
-                <stringProp name="Argument.value">kafka:9093</stringProp>
+                <stringProp name="Argument.value">localhost:9094</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="topic" elementType="Argument">
                 <stringProp name="Argument.name">topic</stringProp>
-                <stringProp name="Argument.value">load_test_topic</stringProp>
+                <stringProp name="Argument.value">benchmark_topic</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="payloadB" elementType="Argument">
@@ -61,11 +63,13 @@
           <stringProp name="classname">org.solutions.jmeter_solution3.producers.KafkaProducerSampler</stringProp>
         </JavaSampler>
         <hashTree/>
+
       </hashTree>
+
       <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="Consumers">
-        <intProp name="ThreadGroup.num_threads">2</intProp>
-        <intProp name="ThreadGroup.ramp_time">2</intProp>
-        <longProp name="ThreadGroup.duration">1000</longProp>
+        <intProp name="ThreadGroup.num_threads">3</intProp>
+        <intProp name="ThreadGroup.ramp_time">1</intProp>
+        <longProp name="ThreadGroup.duration">1</longProp>
         <boolProp name="ThreadGroup.same_user_on_next_iteration">true</boolProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
@@ -75,17 +79,18 @@
         </elementProp>
       </ThreadGroup>
       <hashTree>
+
         <JavaSampler guiclass="JavaTestSamplerGui" testclass="JavaSampler" testname="KafkaConsumer" enabled="true">
           <elementProp name="arguments" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments">
             <collectionProp name="Arguments.arguments">
               <elementProp name="bootstrap" elementType="Argument">
                 <stringProp name="Argument.name">bootstrap</stringProp>
-                <stringProp name="Argument.value">kafka:9093</stringProp>
+                <stringProp name="Argument.value">localhost:9094</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="topic" elementType="Argument">
                 <stringProp name="Argument.name">topic</stringProp>
-                <stringProp name="Argument.value">load_test_topic</stringProp>
+                <stringProp name="Argument.value">benchmark_topic</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
               <elementProp name="groupId" elementType="Argument">
@@ -103,47 +108,56 @@
                 <stringProp name="Argument.value">1000</stringProp>
                 <stringProp name="Argument.metadata">=</stringProp>
               </elementProp>
+              <elementProp name="messagesToRead" elementType="Argument">
+                <stringProp name="Argument.name">messagesToRead</stringProp>
+                <stringProp name="Argument.value">3</stringProp>
+                <stringProp name="Argument.metadata">=</stringProp>
+              </elementProp>
             </collectionProp>
           </elementProp>
           <stringProp name="classname">org.solutions.jmeter_solution3.consumers.KafkaConsumerSampler</stringProp>
         </JavaSampler>
         <hashTree/>
       </hashTree>
+
       <ResultCollector guiclass="ViewResultsFullVisualizer" testclass="ResultCollector" testname="View Results Tree">
-        <boolProp name="ResultCollector.error_logging">false</boolProp>
+        <boolProp name="ResultCollector.error_logging">false</boolProp> <!-- Не будет логировать ошибки в отдельный файл. -->
         <objProp>
           <name>saveConfig</name>
           <value class="SampleSaveConfiguration">
-            <time>true</time>
-            <latency>true</latency>
-            <timestamp>true</timestamp>
-            <success>true</success>
-            <label>true</label>
-            <code>true</code>
-            <message>true</message>
-            <threadName>true</threadName>
-            <dataType>true</dataType>
-            <encoding>false</encoding>
-            <assertions>true</assertions>
-            <subresults>true</subresults>
-            <responseData>false</responseData>
-            <samplerData>false</samplerData>
-            <xml>false</xml>
-            <fieldNames>true</fieldNames>
-            <responseHeaders>false</responseHeaders>
-            <requestHeaders>false</requestHeaders>
-            <responseDataOnError>false</responseDataOnError>
-            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
-            <assertionsResultsToSave>0</assertionsResultsToSave>
-            <bytes>true</bytes>
-            <sentBytes>true</sentBytes>
-            <url>true</url>
-            <threadCounts>true</threadCounts>
-            <idleTime>true</idleTime>
-            <connectTime>true</connectTime>
+            <time>true</time> <!-- Время выполнения сэмпла (запроса), т.е. сколько времени потребовалось для выполнения операции. -->
+            <latency>true</latency> <!-- Задержка ответа — время между отправкой запроса и получением первого байта ответа.-->
+            <timestamp>true</timestamp> <!-- Метка времени (дата и время), когда был выполнен сэмпл. -->
+            <success>true</success> <!-- Успешно ли выполнен запрос. Позволяет быстро увидеть, сколько запросов завершились успешно, а сколько - с ошибками.-->
+            <label>true</label> <!-- Идентифицирует, какая именно операция была выполнена.-->
+            <code>true</code> <!-- Код ответа. -->
+            <message>true</message> <!-- Сообщение ответа. Предоставляет дополнительный контекст к коду ответа. -->
+            <threadName>true</threadName> <!-- Имя потока, для отладки и понимания того, какой поток вызвал определенную проблему. -->
+            <dataType>true</dataType> <!-- Тип данных ответа, для фильтрации и анализа ответов. -->
+            <encoding>false</encoding> <!-- Кодировка ответа.  Если true, JMeter будет пытаться определить и сохранить кодировку. false для снижения накладных расходов.. -->
+            <assertions>true</assertions> <!-- Успешно ли выполнены проверки. -->
+            <subresults>true</subresults> <!-- Результаты подзапросов. Для детализации составных операций. -->
+            <responseData>false</responseData> <!-- Тело ответа от сервера. -->
+            <samplerData>false</samplerData> <!-- Данные запроса. -->
+            <xml>false</xml> <!-- Формат сохранения результатов в XML. -->
+            <fieldNames>true</fieldNames> <!-- Включать ли имена полей в заголовок CSV-файла, для удобства анализа экспортированных данных. -->
+            <responseHeaders>false</responseHeaders> <!-- сохраняются ли заголовки ответа -->
+            <requestHeaders>false</requestHeaders> <!-- сохраняются ли Заголовки запроса. -->
+            <responseDataOnError>false</responseDataOnError> <!-- Сохранять ли Данные ответа при ошибке. false - означает, что ответ не сохраняется даже при ошибке.-->
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage> <!-- Сохранить ли сообщение об ошибке проверки. -->
+            <assertionsResultsToSave>0</assertionsResultsToSave> <!-- Уровень детализации сохранения результатов проверок
+                                                                      0: Только ошибки,  для нагрузочного тестирования, чтобы не перегружать отчеты.
+                                                                      1: Только ошибки и неудачи.
+                                                                      2: Все (успех/неудача/ошибка). -->
+            <bytes>true</bytes> <!-- Количество байтов, полученных в ответе. -->
+            <sentBytes>true</sentBytes> <!-- Количество байтов, отправленных в запросе. -->
+            <url>true</url> <!--  Полный URL-адрес запроса. -->
+            <threadCounts>true</threadCounts> <!-- Количество активных потоков на момент выполнения сэмпла. -->
+            <idleTime>true</idleTime> <!-- Время простоя потока между выполнением текущего сэмпла и началом следующего. -->
+            <connectTime>true</connectTime> <!-- Время, необходимое для установления соединения с сервером. -->
           </value>
         </objProp>
-        <stringProp name="filename"></stringProp>
+        <stringProp name="filename"></stringProp> <!-- Имя файла в который создается отчет. Не указываем, чтобы отчет создавался в папке jmeter_tests с именем указаным в батнике -->
       </ResultCollector>
       <hashTree/>
       <ResultCollector guiclass="SummaryReport" testclass="ResultCollector" testname="Summary Report">
@@ -151,36 +165,36 @@
         <objProp>
           <name>saveConfig</name>
           <value class="SampleSaveConfiguration">
-            <time>true</time>
-            <latency>true</latency>
-            <timestamp>true</timestamp>
-            <success>true</success>
-            <label>true</label>
-            <code>true</code>
-            <message>true</message>
-            <threadName>true</threadName>
-            <dataType>true</dataType>
-            <encoding>false</encoding>
-            <assertions>true</assertions>
-            <subresults>true</subresults>
-            <responseData>false</responseData>
-            <samplerData>false</samplerData>
-            <xml>false</xml>
-            <fieldNames>true</fieldNames>
-            <responseHeaders>false</responseHeaders>
-            <requestHeaders>false</requestHeaders>
-            <responseDataOnError>false</responseDataOnError>
-            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage>
-            <assertionsResultsToSave>0</assertionsResultsToSave>
-            <bytes>true</bytes>
-            <sentBytes>true</sentBytes>
-            <url>true</url>
-            <threadCounts>true</threadCounts>
-            <idleTime>true</idleTime>
-            <connectTime>true</connectTime>
+            <time>true</time> <!-- Время выполнения теста. -->
+            <latency>true</latency> <!-- Задержка ответа. -->
+            <timestamp>true</timestamp> <!-- Время отправки запроса. -->
+            <success>true</success> <!-- Успешно ли выполнен запрос. -->
+            <label>true</label> <!-- Имя запроса. -->
+            <code>true</code> <!-- Код ответа. -->
+            <message>true</message> <!-- Сообщение ответа. -->
+            <threadName>true</threadName> <!-- Имя потока. -->
+            <dataType>true</dataType> <!-- Тип данных. -->
+            <encoding>false</encoding> <!-- Кодировка. -->
+            <assertions>true</assertions> <!-- Успешно ли выполнены проверки. -->
+            <subresults>true</subresults> <!-- Результаты подзапросов. -->
+            <responseData>false</responseData> <!-- Данные ответа. -->
+            <samplerData>false</samplerData> <!-- Данные запроса. -->
+            <xml>false</xml> <!-- XML. -->
+            <fieldNames>true</fieldNames> <!-- Имена полей. -->
+            <responseHeaders>false</responseHeaders> <!-- Заголовки ответа. -->
+            <requestHeaders>false</requestHeaders> <!-- Заголовки запроса. -->
+            <responseDataOnError>false</responseDataOnError> <!-- Данные ответа при ошибке. -->
+            <saveAssertionResultsFailureMessage>true</saveAssertionResultsFailureMessage> <!-- Сохранить сообщение об ошибке проверки. -->
+            <assertionsResultsToSave>0</assertionsResultsToSave> <!-- Сохранить результаты проверки. -->
+            <bytes>true</bytes>  <!-- Размер отправленных данных. -->
+            <sentBytes>true</sentBytes> <!-- Размер отправленных данных. -->
+            <url>true</url> <!-- URL. -->
+            <threadCounts>true</threadCounts> <!-- Количество потоков. -->
+            <idleTime>true</idleTime> <!-- Время простоя. -->
+            <connectTime>true</connectTime> <!-- Время подключения. -->
           </value>
         </objProp>
-        <stringProp name="filename"></stringProp>
+        <stringProp name="filename"></stringProp> <!-- Имя файла в который создается отчет. Не указываем, чтобы отчет создавался в папке jmeter_tests с именем указаным в батнике -->
       </ResultCollector>
       <hashTree/>
     </hashTree>

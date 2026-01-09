@@ -1,50 +1,7 @@
 ﻿version: '3.8' # Рекомендуется использовать версию 3.x
 
 services:
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.6.0 # Образ ZooKeeper от Confluent
-    hostname: zookeeper
-    container_name: zookeeper
-    ports:
-      - "2181:2181" # Маппинг порта ZooKeeper
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    volumes:
-      - zookeeper_data:/var/lib/zookeeper/data # Для сохранения данных ZooKeeper
-      - zookeeper_log:/var/lib/zookeeper/log # Для сохранения логов ZooKeeper
 
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0 # Образ Kafka от Confluent (включает брокер)
-    hostname: kafka
-    container_name: kafka
-    ports:
-      - "9092:9092" # Порт для клиентов снаружи Docker
-      - "9094:9094" # Порт для клиентов снаружи Docker
-      - "9093:9093" # Порт для клиентов внутри Docker (используется Kafka Connect, Flink и т.д.)
-    depends_on:
-      - zookeeper # Kafka зависит от ZooKeeper
-    environment:
-      KAFKA_BROKER_ID: 1 # Уникальный ID для брокера (если у вас кластер, каждый должен быть уникален)
-      
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181 # Адрес ZooKeeper
-      # KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1 # ВАЖНО: Это адрес, по которому JMeter будет видеть Kafka
-      KAFKA_CREATE_TOPICS: "load_test_topic:1:1" # Создаём топик по умолчанию
-      
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT # Типы слушателей
-      
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9093,PLAINTEXT_HOST://127.0.0.1:9092 # Адреса, которые Kafka рекламирует клиентам
-      # PLAINTEXT://kafka:9093 - для доступа внутри Docker (имя сервиса:порт)
-      # PLAINTEXT_HOST://localhost:9092 - для доступа с хостовой машины (localhost:порт)
-      
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 # Количество реплик для темы offsets (для одного брокера = 1)
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1 # Количество реплик для темы транзакций
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1 # Минимальное количество In-Sync Replicas
-      KAFKA_LOG_RETENTION_HOURS: 168 # Время хранения логов (по умолчанию 7 дней)
-      KAFKA_NUM_PARTITIONS: 1 # Количество партиций по умолчанию для новых тем
-    volumes:
-      - kafka_data:/var/lib/kafka/data # Для сохранения данных Kafka
-      - /var/run/docker.sock:/var/run/docker.sock
       
   jmeter:
     # Используем собственный образ, созданный из Dockerfile ***
@@ -69,23 +26,3 @@ services:
     command: ["-cp", "/opt/apache-jmeter-5.6.3/lib/*:/opt/apache-jmeter-5.6.3/lib/ext/*:/opt/apache-jmeter-5.6.3/lib/ext/kafka_samplers.jar", "org.solutions.jmeter_solution3.sender.JMeterRunner"]
     depends_on:
       - kafka
-    # Optional: если вы хотите увидеть логи JMeter прямо в выводе Docker Compose
-    # logging:
-    #   driver: "json-file"
-    #   options:
-    #     max-size: "10m"
-    #     max-file: "5"
-    
-    
-volumes:
-  zookeeper_data:
-  zookeeper_log:
-  kafka_data:
-
-  #docker-compose down -v
-  #docker-compose build
-  # docker compose up -d
-#  docker compose up -d --build
-
-  # docker exec -it jmeter bash
-  # ls -l /opt
